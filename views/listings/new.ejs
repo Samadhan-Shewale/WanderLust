@@ -1,0 +1,73 @@
+<% layout("./layouts/boilerplate") %>
+<body>
+  <div class="row mt-3">
+    <div class="col-8 offset-2">
+        <h2>Create a new Listing</h2>
+        <form method="POST" action="/listings">
+          <div class="mb-3">
+            <label for="title" class="form-label"> title </label>
+            <input 
+            name="listing[title]" 
+            class="form-control" 
+            type="text" 
+            />
+          </div>
+      
+          <div class="mb-3" >
+            <label for="description" class="form-label"> description</label>
+            <textarea
+              name="listing[description]"
+              class="form-control"
+              
+              placeholder="description"
+            ></textarea>
+          </div>
+         
+          <div class="mb-3">
+              <label for="image" class="form-label" > image link/url</label>
+              <input
+                name="listing[image]"
+                class="form-control"
+                type="text"
+                placeholder="enter image url/link"
+              />
+          </div>
+
+          <div class="row">
+              <div class="mb-3 col-md-4">
+                <label for="price" class="form-label">price </label>
+                <input
+                  name="listing[price]"
+                  class="form-control"
+                  type="number"
+                  placeholder="1000"
+                />
+              </div>
+          
+          
+              <div class="mb-3 col-md-8">
+                <label for="location" class="form-label">location </label>
+                <input
+                  name="listing[location]"
+                  class="form-control"
+                  type="text"
+                  placeholder="Pune, Nashik"
+                />
+              </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="country" class="form-label"> country</label>
+            <input
+              name="listing[country]"
+              class="form-control"
+              type="text"
+              placeholder="India"
+            />
+          </div>
+          <button class="btn btn-dark add-btn">add</button>
+          <br><br>
+        </form>
+    </div>
+  </div>
+</body>
