@@ -7,7 +7,7 @@ const methodOverride  =  require("method-override");
 const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");  // custom express-error handler class
-
+const {listingSchema } = require("./schema.js");          // schema validator surver side ( Joi )
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -50,8 +50,10 @@ app.get("/listings/:id", wrapAsync (async (req,res) =>{
 
 // new route 
 app.post("/listings", wrapAsync (async (req,res, next)  => {
-        if(! req.body.listing){
-            throw new ExpressError(400, "Send valid data for listings");
+        
+        let result = listingSchema.validate(req.body);
+        if(result.error){
+            throw new ExpressError(400, result.error);
         }
         const newListing = new Listing( req.body.listing );
         await newListing.save();
