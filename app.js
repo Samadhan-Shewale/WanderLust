@@ -8,6 +8,7 @@ const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");  // custom express-error handler class
 const {listingSchema } = require("./schema.js");          // schema validator surver side ( Joi )
+const Review = require("./models/review.js");              
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -27,6 +28,16 @@ main()
 
 async function main(){
    await mongoose.connect(MONGO_URL);
+}
+
+// converting validation into middleware
+const validateListing = (req,res, next ) =>{
+    let {error } = listingSchema.validate(req.body);
+    if( error ){
+        throw new ExpressError(400, error );
+    }else{
+        next();
+    }
 }
 
 // index route 
@@ -49,12 +60,9 @@ app.get("/listings/:id", wrapAsync (async (req,res) =>{
 }));
 
 // new route 
-app.post("/listings", wrapAsync (async (req,res, next)  => {
+app.post("/listings", validateListing , wrapAsync (async (req,res, next)  => {
         
-        let result = listingSchema.validate(req.body);
-        if(result.error){
-            throw new ExpressError(400, result.error);
-        }
+        
         const newListing = new Listing( req.body.listing );
         await newListing.save();
         res.redirect("/listings");
@@ -68,22 +76,52 @@ app.get("/listings/:id/edit", wrapAsync ( async(req, res) =>{
 }))
 
 // update route
-app.put("/listings/:id", wrapAsync ( async (req, res) =>{
-    if(! req.body.listing ){
-        throw new ExpressError(400, "Send valid data for listing ");
-    }
+app.put("/listings/:id", validateListing, wrapAsync ( async (req, res) =>{
+    // if(! req.body.listing ){
+    //     throw new ExpressError(400, "Send valid data for listing ");
+    // }
     const {id} = req.params;
     await Listing.findByIdAndUpdate( id, {...req.body.listing })
     res.redirect(`/listings/${id}`);
 
 }))
 
-// delete route
+// delete route  
 app.delete("/listings/:id", wrapAsync ( async (req, res) =>{
-    const {id} = req.params ;
+   const {id} = req.params ;
     await Listing.findByIdAndDelete(id);
     res.redirect("/listings");
 }))
+
+// Reviews 
+//  Post Route 
+app.post("/listings/:id/reviews", async (req,res) =>{
+    const listing = await Listing.findById(req.params.id);
+    const newReview = new Review(req.body.review);
+    
+    listing.reviews.push(newReview );
+
+    await newReview.save();
+    await listing.save();
+
+   res.redirect(`/listings/${listing._id}`)
+})
+
+
+// app.post("listings/:id/reviews", async (req,res) => {
+//     let listing = await Listing.findById(req.params.id);
+//     let newReview = new Review(req.body.review);
+
+//     listing.reviews.push(newReview);
+
+//     await newReview.save();
+//     await listing.save();
+
+//     console.log("New Review saved");
+
+//     res.send("New Review saved ");
+//     // res.redirect()
+// });
 
 
 app.get("/", (req,res) =>{
