@@ -5,9 +5,12 @@ const path = require("path");
 const methodOverride  =  require("method-override"); 
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");   // custom express-error handler class
+const session = require("express-session");                
+const flash = require("connect-flash");             // special area of session used for storing msg
 
 const listings = require("./Router/listing.js");    // contain the methods of listings
 const reviews = require("./Router/review.js");      // // contain the methods of reviews
+const { connected } = require("process");
 
 
 app.set("view engine", "ejs");
@@ -30,16 +33,35 @@ async function main(){
    await mongoose.connect(MONGO_URL);
 }
 
+const sessionOptions = {
+    secret : "mysupersrcretcode",
+    resave : false,
+    saveUninitialized : true,
+    cookie:{
+        expires : Date.now() + 7 *24* 60 * 60 * 1000,
+        maxAge : 7 *24* 60 * 60 * 1000,
+        httpOnly : true,
+    },
+}
 
+app.get("/", (req,res) =>{
+    res.send("App is working!!");
+})
+
+app.use(session( sessionOptions ));
+app.use( flash() );
+
+app.use((req,res,next) =>{
+    res.locals.success = req.flash("success");
+    res.locals.error = req.flash("error");
+    next();
+});
 
 app.use("/listings", listings);
 app.use("/listings/:id/reviews",reviews );
 
 
 
-app.get("/", (req,res) =>{
-    res.send("App is working!!");
-})
 
 app.all("*", (req,res,next) =>{
     next(new ExpressError(403, "Page Not Found"));
