@@ -7,11 +7,14 @@ const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");   // custom express-error handler class
 const session = require("express-session");                
 const flash = require("connect-flash");             // special area of session used for storing msg
+const passport = require( "passport" );
+const LocalStrategy = require("passport-local");
+const User = require("./models/user.js");
 
-const listings = require("./Router/listing.js");    // contain the methods of listings
-const reviews = require("./Router/review.js");      // // contain the methods of reviews
-const { connected } = require("process");
-
+const listingRouter = require("./Router/listing.js");    // contain the methods of listings
+const reviewRouter = require("./Router/review.js");      // // contain the methods of reviews
+// const { connected } = require("process");
+const userRouter = require("./Router/user.js");
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -51,15 +54,32 @@ app.get("/", (req,res) =>{
 app.use(session( sessionOptions ));
 app.use( flash() );
 
+//  passport strategy implemetation 
+app.use(passport.initialize() );   // initialize the passport
+app.use( passport.session() );    // every request has to know that they are part of which type of session
+passport.use( new LocalStrategy( User.authenticate() ));
+passport.serializeUser( User.serializeUser() );         // to serialize user into session
+passport.deserializeUser( User.deserializeUser() );      // to deserialize user into session
+
+
 app.use((req,res,next) =>{
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
     next();
 });
 
-app.use("/listings", listings);
-app.use("/listings/:id/reviews",reviews );
+app.get("/demouser", async (req,res, next) =>{
+    let fakeUser = {
+        email : "student@gmail.com",
+        username: "demo-student",
+    }
+    let registedUser = await User.register( fakeUser, "pass123");
+    res.send(registedUser );
+})
 
+app.use("/listings", listingRouter);
+app.use("/listings/:id/reviews",reviewRouter );
+app.use("/", userRouter);
 
 
 
